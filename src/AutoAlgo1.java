@@ -1,3 +1,4 @@
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
@@ -32,8 +33,7 @@ public class AutoAlgo1 {
 	ArrayList<Func> degrees_left_func;
 	
 	boolean isSpeedUp = false;
-	
-	//Graph mGraph = new Graph();
+
 	DefaultDirectedGraph<String, DefaultEdge> mGraph = new DefaultDirectedGraph<String, DefaultEdge>(DefaultEdge.class);
 	DefaultDirectedGraph<String, DefaultEdge> fullGraph = new DefaultDirectedGraph<String, DefaultEdge>(DefaultEdge.class);
 	ArrayList<Point> suspectedPoints = new ArrayList<Point>();
@@ -215,18 +215,8 @@ public class AutoAlgo1 {
 	public void paintPoints(Graphics g) {
 		for(int i=0;i<points.size();i++) {
 			Point p = points.get(i);
-//			if(SimulationWindow.return_home) {
-//				Color c = new Color(0x0000C8);
-//				g.setColor(c);
-//				g.fillOval((int)p.x + (int)drone.startPoint.x - 10, (int)p.y + (int)drone.startPoint.y-10, 20, 20);
-//			}
-//			else if(suspectedPoints.contains(p))
-//				g.drawRect((int)p.x + (int)drone.startPoint.x - 10, (int)p.y + (int)drone.startPoint.y-10, 20, 20);
-//			else
 			g.drawOval((int)p.x + (int)drone.startPoint.x - 10, (int)p.y + (int)drone.startPoint.y-10, 20, 20);
 		}
-	
-		
 	}
 	
 	public void paint(Graphics g) {
@@ -266,26 +256,16 @@ public class AutoAlgo1 {
 	
 	double save_point_after_seconds = 3;
 	
-	double max_distance_between_points = 75;
+	double max_distance_between_points = 100;
 	
 	boolean stuck = false;
 	int waiting = 0;
-	
-	boolean start_return_home = false;
+
 	boolean return_home_maneuver = false;
-	boolean return_suspect_maneuver = false;
-    boolean return_suspect = false;
     int wait_to_update = 0; 
 	
 	int seconds = 0;
 	int last_suspect_deletion = -3;
-	Timer timer = new Timer();
-	TimerTask task = new TimerTask() {
-		public void run() {
-			seconds++;
-			System.out.println(seconds);
-		  }
-		};
 	Point init_point;
 	public void ai(int deltaTime) {
 		if(!SimulationWindow.toogleAI) {
@@ -302,8 +282,6 @@ public class AutoAlgo1 {
 			fullGraph.addVertex(dronePoint.toString());
 			//fullGraph.addVertex(dronePoint);
 			is_init = false;
-			
-			timer.scheduleAtFixedRate(task, 1000, 1000);
 		}
 		
 		if(isLeftRightRotationEnable) {
@@ -314,48 +292,51 @@ public class AutoAlgo1 {
 		Point dronePoint = drone.getOpticalSensorLocation();
 
 		
-		if(SimulationWindow.return_home) {
+		if(SimulationWindow.return_home)
+		{
 			wait_to_update++;
-			//updateVisited();
 			int maneuverDegree=180+(int)(Tools.getRotationBetweenPoints(dronePoint , getLastPoint()));;
 			if(dronePoint.x < getLastPoint().x)
 			maneuverDegree = 360+(int)(Tools.getRotationBetweenPoints(dronePoint , getLastPoint()));
 
-			if(!return_home_maneuver) {
+			if(!return_home_maneuver)
+			{
 				this.drone.stopDrone();
 				mGraph.addVertex(dronePoint.toString());
 				mGraph.addEdge(getLastPoint().toString(), dronePoint.toString());
 				fullGraph.addVertex(dronePoint.toString());
 				fullGraph.addEdge(getLastPoint().toString(), dronePoint.toString());
 				points.add(dronePoint);
-				
-				DijkstraShortestPath<String, DefaultEdge> dijkstraAlg = new DijkstraShortestPath<>(fullGraph);				
-				GraphPath<String, DefaultEdge> path = dijkstraAlg.getPath(init_point.toString(), getLastPoint().toString());
-				
 
-				List<String> vertics = path.getVertexList();
-				ArrayList<Point> temp = new ArrayList<Point>(points);
-				for(Point p : points) {
-					if(!vertics.contains(p.toString()))
-						temp.remove(p);
-					
+				DijkstraShortestPath<String, DefaultEdge> dijkstraShortestPath = new DijkstraShortestPath<>(fullGraph);
+				GraphPath<String, DefaultEdge> path = dijkstraShortestPath.getPath(init_point.toString(), getLastPoint().toString());
+
+
+				List<String> pathVertexList = path.getVertexList();
+				ArrayList<Point> points = new ArrayList<Point>(this.points);
+				for(Point p : this.points)
+				{
+					if(!pathVertexList.contains(p.toString()))
+						points.remove(p);
+
 				}
-				points = temp;
+				this.points = points;
 			    this.drone.escapeManeuver(180);// maneuver to the same direction of the last path point
 			    speedUp();
 			    return_home_maneuver = true;
 			}
-			if(wait_to_update > 800 || Tools.getDistanceBetweenPoints(dronePoint, getLastPoint()) < max_distance_between_points/2 && wait_to_update > 50) {
-				
+			if(wait_to_update > 800 || Tools.getDistanceBetweenPoints(dronePoint, getLastPoint()) < max_distance_between_points/2 && wait_to_update > 50)
+			{
 				this.drone.stopDrone();
 				this.drone.directDrone(maneuverDegree);
 				speedUp();
 				wait_to_update = 0;
 			}
 			
-			if( Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) <  max_distance_between_points/2) {
-				
-				if(points.size() <= 1 && Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) <  max_distance_between_points/4) {
+			if( Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) <  max_distance_between_points/2)
+			{
+				if(points.size() <= 1 && Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) <  max_distance_between_points/4)
+				{
 					speedDown();
 				} else {
 					if(points.size() > 1)
@@ -367,57 +348,21 @@ public class AutoAlgo1 {
 			}
 			
 		}
-		// Reach to the last suspected point and then continue
-		else if(return_suspect) {
-			if(!return_suspect_maneuver) {
-				   this.drone.escapeManeuver(180);
-				   return_suspect_maneuver = true;
-				}
-			
-			if(Tools.getDistanceBetweenPoints(this.suspectedPoints.get(suspectedPoints.size()-1), dronePoint) <  max_distance_between_points/4) {
-				
-				suspectedPoints.remove(suspectedPoints.size()-1);
-				last_suspect_deletion = seconds;
-				return_suspect = false;
-				return_suspect_maneuver = false;
-				
-				}
-			
-			else if( Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) <  max_distance_between_points/2) {
-				if(points.size() <= 1 && Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) <  max_distance_between_points/4) {
-					speedDown();
-				} else {
-					removeLastPoint();
-				}
-				
-			}
-		}
-		else {
-			if( Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) >=  max_distance_between_points && last_suspect_deletion + 2 < seconds) {
-		
-				
+		else
+		{
+			if (Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) >= max_distance_between_points)
+			{
 				mGraph.addVertex(dronePoint.toString());
 				mGraph.addEdge(getLastPoint().toString(), dronePoint.toString());
 				fullGraph.addVertex(dronePoint.toString());
 				fullGraph.addEdge(getLastPoint().toString(), dronePoint.toString());
 				points.add(dronePoint);
-			
-				if(this.drone.lidars.get(1).current_distance > 299 && !return_suspect || this.drone.lidars.get(2).current_distance > 299 && !return_suspect) 
-					suspectedPoints.add(dronePoint);
-				for(Point vertex: points) {
-					if(Tools.getDistanceBetweenPoints(vertex, getLastPoint()) <  max_distance_between_points && !vertex.equals(getLastPoint()))
-						fullGraph.addEdge(vertex.toString(), points.get(points.size()-1).toString());
-				}
-
-				
 			}
 		}
-	
-		
-		
-		if(!is_risky) {
+		if(!is_risky)
+		{
 			Lidar lidar = drone.lidars.get(0);
-			if(lidar.current_distance <= max_risky_distance * 1.5 ) {
+			if(lidar.current_distance <= max_risky_distance ) {
 				is_risky = true;
 				risky_dis = lidar.current_distance;
 				
@@ -425,16 +370,16 @@ public class AutoAlgo1 {
 			
 			
 			Lidar lidar1 = drone.lidars.get(1);
-			if(lidar1.current_distance <= max_risky_distance/6 ) {
+			if(lidar1.current_distance <= max_risky_distance/3 ) {
 				is_risky = true;
 			}
 			
 			Lidar lidar2 = drone.lidars.get(2);
-			if(lidar2.current_distance <= max_risky_distance/6 ) {
+			if(lidar2.current_distance <= max_risky_distance/3 ) {
 				is_risky = true;
 			}
 			
-			if(lidar.current_distance > 300)
+			if(lidar.current_distance > 250)
 				isSpeedUp = true;
 			
 		} else {
@@ -446,34 +391,24 @@ public class AutoAlgo1 {
 				Lidar lidar2 = drone.lidars.get(2);
 				double b = lidar2.current_distance;
 				
-				Lidar lidar0 = drone.lidars.get(0);
-				double c = lidar0.current_distance;
-				
+				Lidar lidar3 = drone.lidars.get(0);
+				double c = lidar3.current_distance;
 				int spin_by;
-				if(SimulationWindow.return_home || return_suspect)
+				if(SimulationWindow.return_home)
 					spin_by = 1;
 				else
 					spin_by = 2;
 
-			    if(c < 150 && c != 0) {
+			    if(c < 200 && c != 0)
+			    {
 			    	isSpeedUp = false;
-			    	
+
 			    }
 			    else
 			    	speedUp();
+			    if(c < 30 && c > 0 && seconds > 0 )
+			    {
 
-			    if(this.drone.getSpeed() == 0 && seconds > 0) {  // if stuck
-					waiting++;
-					if(waiting > 100 ) {
-
-						this.drone.escapeManeuver(45);
-						waiting = 0;
-						speedUp();
-					}
-				}
-		
-			    if(c < 30 && c > 0 && seconds > 0 ) {
-			    
 			    	this.drone.stopDrone();
 			    	this.drone.escapeManeuver(60);
 			    	speedUp();
@@ -493,21 +428,21 @@ public class AutoAlgo1 {
 							removeLastPoint();
 						}
 					} else {
-						if( Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) >=  max_distance_between_points && last_suspect_deletion + 2 < seconds) {
-							
+						if( Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) >=  max_distance_between_points)
+						{
 							mGraph.addVertex(dronePoint.toString());
 							mGraph.addEdge(getLastPoint().toString(), dronePoint.toString());
 							fullGraph.addVertex(dronePoint.toString());
 							fullGraph.addEdge(getLastPoint().toString(), dronePoint.toString());
 							points.add(dronePoint);
-							if(this.drone.lidars.get(1).current_distance > 299 && !return_suspect || this.drone.lidars.get(2).current_distance > 299 && !return_suspect) {
+							if(this.drone.lidars.get(1).current_distance > 250 || this.drone.lidars.get(2).current_distance > 250) {
 								suspectedPoints.add(dronePoint);
 							    	
 							}
 						}
 					}
 					
-					if(SimulationWindow.return_home || return_suspect) {
+					if(SimulationWindow.return_home) {
 						spin_by *= -1;						
 					}
 					

@@ -242,6 +242,7 @@ public class SimulationWindow {
 		{
 			  public void actionPerformed(ActionEvent e)
 			  {
+				  //algo1.mGraph.drawGraph();
 			    	JFrame new_window = new JFrame();
 			    	new_window.setSize(500,500);
 			    	new_window.setTitle("Graph Viewer");
@@ -287,8 +288,7 @@ public class SimulationWindow {
 	public static AutoAlgo1 algo1;
 	
 	
-	public void main()
-	{
+	public void main() {
 		int map_num = 1;
 		Point[] startPoints = {
 				new Point(100,50),

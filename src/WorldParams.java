@@ -1,3 +1,4 @@
+
 public class WorldParams {
 	public static int lidarLimit = 300; // in cm
 	public static int lidarNoise = 1; // in cm 3
