@@ -7,4 +7,4 @@ in Energency Escape -  we added to the drone the ability to turn immediately if 
 
 in shortest way back home  - we cuculated the shorthest path by adding edges between the nearest points on the flight and using Dijkstra algorithm.
 
-in Direction -  to return home it chnges the angle between itself and the next point.
+in Direction -  to return home it changes the angle between itself and the next point.
